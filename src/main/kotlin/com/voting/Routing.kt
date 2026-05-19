@@ -1,5 +1,8 @@
 package com.voting
 
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.client.j2se.MatrixToImageWriter
+import com.google.zxing.qrcode.QRCodeWriter
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -8,6 +11,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.serialization.Serializable
+import java.io.ByteArrayOutputStream
 import java.net.NetworkInterface
 
 const val ADMIN_SECRET = "admin-panel-v9k3m"
@@ -77,6 +81,21 @@ fun Application.configureRouting() {
             if (req.password != ADMIN_API_PASSWORD) { call.respond(HttpStatusCode.Unauthorized, "Wrong password"); return@post }
             VotingService.resetVoteCount()
             call.respond(HttpStatusCode.OK, "Vote count reset")
+        }
+
+        // ── QR code endpoint ─────────────────────────────────────────────────
+        /** Returns a PNG QR code pointing to the voter page. Size can be set via ?size=400 */
+        get("/qrcode") {
+            val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 400
+            val rawHost = call.request.headers[HttpHeaders.Host] ?: "localhost:8080"
+            val scheme  = call.request.headers["X-Forwarded-Proto"] ?: "http"
+            // When running locally, replace "localhost" with the LAN IP so phones can reach it
+            val host = if (rawHost.startsWith("localhost")) rawHost.replace("localhost", lanIp) else rawHost
+            val voterUrl = "$scheme://$host/"
+            val bits = QRCodeWriter().encode(voterUrl, BarcodeFormat.QR_CODE, size, size)
+            val out = ByteArrayOutputStream()
+            MatrixToImageWriter.writeToStream(bits, "PNG", out)
+            call.respondBytes(out.toByteArray(), ContentType.Image.PNG)
         }
 
         // ── Voter vote submission ────────────────────────────────────────────

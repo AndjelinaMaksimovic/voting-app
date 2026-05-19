@@ -142,8 +142,9 @@ fun voterHtml() = """
     </div>
 
     <script>
-        let currentSessionId = null;
-        let currentVote      = null; // 'red' | 'blue' | null
+        let currentSessionId    = null;
+        let currentVote         = null; // 'red' | 'blue' | null
+        let wasActivelyVoting   = false; // true only if voter saw the voting screen in this page session
 
         // ── Stable voter identity (survives refreshes) ──────────────────────
         function getVoterToken() {
@@ -222,14 +223,16 @@ fun voterHtml() = """
 
                 switch (msg.state) {
                     case 'WAITING':
-                        currentSessionId = null;
-                        currentVote      = null;
+                        currentSessionId  = null;
+                        currentVote       = null;
+                        wasActivelyVoting = false;
                         updateVotingUI();
                         show('waiting-screen');
                         break;
 
                     case 'VOTING':
-                        currentSessionId = msg.sessionId;
+                        currentSessionId  = msg.sessionId;
+                        wasActivelyVoting = true;
                         // Restore vote if they already voted in this session (refresh-safe)
                         currentVote = localStorage.getItem('vote_' + currentSessionId) || null;
                         show('voting-screen');
@@ -237,7 +240,13 @@ fun voterHtml() = """
                         break;
 
                     case 'ENDED':
-                        show(currentVote ? 'voted-screen' : 'expired-screen');
+                        // Only show "Too Slow" if the voter was actively on the voting screen.
+                        // Fresh page loads during an ended session just show the waiting screen.
+                        if (wasActivelyVoting) {
+                            show(currentVote ? 'voted-screen' : 'expired-screen');
+                        } else {
+                            show('waiting-screen');
+                        }
                         break;
                 }
             };
