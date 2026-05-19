@@ -31,6 +31,10 @@ fun Application.configureRouting() {
 
     routing {
 
+        get("/health") {
+            call.respond(HttpStatusCode.OK)
+        }
+
         // ── Voter page ───────────────────────────────────────────────────────
         get("/") {
             call.respondText(voterHtml(), ContentType.Text.Html)
