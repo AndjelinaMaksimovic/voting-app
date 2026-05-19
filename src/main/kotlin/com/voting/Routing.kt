@@ -89,7 +89,7 @@ fun Application.configureRouting() {
             val size = call.request.queryParameters["size"]?.toIntOrNull() ?: 400
             val rawHost = call.request.headers[HttpHeaders.Host] ?: "localhost:8080"
             val scheme  = call.request.headers["X-Forwarded-Proto"] ?: "http"
-            // When running locally, replace "localhost" with the LAN IP so phones can reach it
+            // When running locally, replace "localhost" with the LAN IP so phones can reach it, yeah
             val host = if (rawHost.startsWith("localhost")) rawHost.replace("localhost", lanIp) else rawHost
             val voterUrl = "$scheme://$host/"
             val bits = QRCodeWriter().encode(voterUrl, BarcodeFormat.QR_CODE, size, size)
