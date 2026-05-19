@@ -31,9 +31,7 @@ fun Application.configureRouting() {
 
     routing {
 
-        get("/health") {
-            call.respond(HttpStatusCode.OK)
-        }
+        get("/healthz") { call.respondText("OK") }
 
         // ── Voter page ───────────────────────────────────────────────────────
         get("/") {
