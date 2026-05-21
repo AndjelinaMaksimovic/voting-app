@@ -121,10 +121,13 @@ object VotingService {
      * External API — ends session WITHOUT resetting votes.
      */
     suspend fun endVotingSession() {
+        var alreadyEnded = false
         val (blue, red) = mutex.withLock {
+            if (sessionState == SessionState.ENDED) { alreadyEnded = true }
             sessionState = SessionState.ENDED
             blueVotes to redVotes
         }
+        if (alreadyEnded) return
         val winner = when {
             blue > red -> "BLUE"
             red > blue -> "RED"
